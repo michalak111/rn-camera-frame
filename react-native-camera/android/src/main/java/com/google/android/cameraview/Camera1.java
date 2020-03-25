@@ -140,7 +140,7 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
         preview.setCallback(new PreviewImpl.Callback() {
             @Override
             public void onSurfaceChanged() {
-
+                Log.v("SURFACE:::", "HERE CAN ADD LISTENER WHEN RECORDING CHANGED");
                 // if we got our surface destroyed
                 // we must re-start the camera and surface
                 // otherwise, just update our surface
@@ -330,7 +330,6 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
     }
 
     private void startCameraPreview() {
-        Log.e("CAMERA_1::", "PREVIEW");
         // only start the preview if we didn't yet.
         if(!mIsPreviewActive && mCamera != null){
             try{

@@ -36,10 +36,13 @@ const Camera = ({onHide}) => {
           camera = ref;
         }}
         style={styles.preview}
-        type={RNCamera.Constants.Type.front}
+        type={RNCamera.Constants.Type.back}
         flashMode={RNCamera.Constants.FlashMode.on}
-        onRecordingProgress={data => {
-          console.log('dupa');
+        // onRecordingProgress={data => {
+        //   console.log('dupa');
+        // }}
+        onModelProgress={data => {
+          console.log('onModelProgress called');
         }}
         androidCameraPermissionOptions={{
           title: 'Permission to use camera',

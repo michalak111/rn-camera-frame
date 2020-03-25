@@ -261,6 +261,7 @@ type PropsType = typeof View.props & {
   onRecordingStart?: Function,
   onRecordingEnd?: Function,
   onRecordingProgress?: Function,
+  onModelProgress?: Function,
   onGoogleVisionBarcodesDetected?: ({ barcodes: Array<TrackedBarcodeFeature> }) => void,
   onSubjectAreaChanged?: ({ nativeEvent: { prevPoint: {| x: number, y: number |} } }) => void,
   faceDetectionMode?: number,
@@ -403,6 +404,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
     onPictureSaved: PropTypes.func,
     onRecordingStart: PropTypes.func,
     onRecordingProgress: PropTypes.func,
+    onModelProgress: PropTypes.func,
     onRecordingEnd: PropTypes.func,
     onGoogleVisionBarcodesDetected: PropTypes.func,
     onFacesDetected: PropTypes.func,
@@ -843,6 +845,10 @@ export default class Camera extends React.Component<PropsType, StateType> {
       newProps.textRecognizerEnabled = true;
     }
 
+    if (props.onModelProgress) {
+      newProps.modelRecognitionEnabled = true;
+    }
+
     if (Platform.OS === 'ios') {
       delete newProps.googleVisionBarcodeMode;
       delete newProps.ratio;
@@ -871,6 +877,7 @@ const RNCamera = requireNativeComponent('RNCamera', Camera, {
     googleVisionBarcodeDetectorEnabled: true,
     faceDetectorEnabled: true,
     textRecognizerEnabled: true,
+    modelRecognitionEnabled: true,
     importantForAccessibility: true,
     onBarCodeRead: true,
     onGoogleVisionBarcodesDetected: true,

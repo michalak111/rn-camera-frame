@@ -21,6 +21,7 @@ import org.reactnative.camera.events.*;
 import org.reactnative.barcodedetector.RNBarcodeDetector;
 import org.reactnative.facedetector.RNFaceDetector;
 
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -233,6 +234,7 @@ public class RNCameraViewHelper {
      });
   }
 
+  // todo delete
   public static void emitRecordingProgressEvent(final ViewGroup view) {
 
     final ReactContext reactContext = (ReactContext) view.getContext();
@@ -255,6 +257,19 @@ public class RNCameraViewHelper {
         reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
       }
      });
+  }
+
+
+  public static void emitModelProgressEvent(final ViewGroup view, final ByteBuffer data) {
+
+    final ReactContext reactContext = (ReactContext) view.getContext();
+    reactContext.runOnNativeModulesQueueThread(new Runnable() {
+      @Override
+      public void run() {
+        ModelProgressEvent event = ModelProgressEvent.obtain(view.getId(), data);
+        reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
+      }
+    });
   }
 
   // Face detection events

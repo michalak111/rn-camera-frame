@@ -164,6 +164,7 @@ export interface RNCameraProps {
   }): void;
   onRecordingProgress?(): void;
   onRecordingEnd?(): void;
+  onModelProgress?(): void;
 
   /** iOS only */
   onAudioInterrupted?(): void;

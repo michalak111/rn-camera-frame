@@ -43,7 +43,6 @@ public class RecordingStartEvent extends Event<RecordingStartEvent> {
 
     @Override
     public void dispatch(RCTEventEmitter rctEventEmitter) {
-        Log.v("dispatch:::::", "dispatch:::");
         rctEventEmitter.receiveEvent(getViewTag(), getEventName(), mResponse);
     }
 }
