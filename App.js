@@ -41,8 +41,16 @@ const Camera = ({onHide}) => {
         // onRecordingProgress={data => {
         //   console.log('dupa');
         // }}
-        onModelProgress={data => {
+        onModelProgress={(a, data) => {
           console.log('onModelProgress called');
+          const _data = a.nativeEvent.dataList;
+          // console.log(a.nativeEvent);
+          console.log(_data.filter(i => i !== 0));
+          // console.log(typeof a);
+          // console.log('=====a======');
+          // if ('data' in a) {
+          //   console.log(a.data);
+          // }
         }}
         androidCameraPermissionOptions={{
           title: 'Permission to use camera',

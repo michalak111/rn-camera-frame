@@ -17,15 +17,18 @@ import java.nio.ByteBuffer;
 
 public class ModelProgressEvent extends Event<ModelProgressEvent> {
     private static final Pools.SynchronizedPool<ModelProgressEvent> EVENTS_POOL = new Pools.SynchronizedPool<>(3);
-    private ModelProgressEvent() {}
+
+    private ModelProgressEvent() {
+    }
 
     private ByteBuffer mData;
-    private WritableMap mResponse;
 
-    public static ModelProgressEvent obtain(int viewTag, ByteBuffer data) {
+    public static ModelProgressEvent obtain(
+            int viewTag,
+            ByteBuffer data) {
         ModelProgressEvent event = EVENTS_POOL.acquire();
         if (event == null) {
-        event = new ModelProgressEvent();
+            event = new ModelProgressEvent();
         }
         event.init(viewTag, data);
         return event;
@@ -33,21 +36,24 @@ public class ModelProgressEvent extends Event<ModelProgressEvent> {
 
     private void init(int viewTag, ByteBuffer data) {
         super.init(viewTag);
-        if(data != null) {
-            mData = data;
-            mData.rewind();
-            byte[] byteArray = new byte[mData.capacity()];
-            mData.get(byteArray);
-            WritableArray dataList = Arguments.createArray();
-            for (byte b : byteArray) {
-                dataList.pushInt((int)b);
-            }
+        mData = data;
+    }
 
-            mResponse.putArray("data", dataList);
-            Log.v("MODEL DATA:::", dataList.toString());
+    private WritableMap serializeEventData() {
+        mData.rewind();
+        byte[] byteArray = new byte[mData.capacity()];
+        mData.get(byteArray);
+        WritableArray dataList = Arguments.createArray();
+        for (byte b : byteArray) {
+            dataList.pushInt((int)b);
         }
 
-        Log.v("MODEL DATA 2:::", data.toString());
+        WritableMap event = Arguments.createMap();
+        event.putString("type", "textBlock");
+        Log.v("DATALIST", dataList.toString());
+        event.putArray("dataList", dataList);
+        event.putInt("target", getViewTag());
+        return event;
     }
 
     // @Override
@@ -63,6 +69,6 @@ public class ModelProgressEvent extends Event<ModelProgressEvent> {
 
     @Override
     public void dispatch(RCTEventEmitter rctEventEmitter) {
-        rctEventEmitter.receiveEvent(getViewTag(), getEventName(), mResponse);
+        rctEventEmitter.receiveEvent(getViewTag(), getEventName(), serializeEventData());
     }
 }

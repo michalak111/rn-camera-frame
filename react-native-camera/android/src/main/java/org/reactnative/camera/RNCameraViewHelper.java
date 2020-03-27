@@ -260,16 +260,11 @@ public class RNCameraViewHelper {
   }
 
 
-  public static void emitModelProgressEvent(final ViewGroup view, final ByteBuffer data) {
+  public static void emitModelProgressEvent( ViewGroup view, ByteBuffer data) {
 
-    final ReactContext reactContext = (ReactContext) view.getContext();
-    reactContext.runOnNativeModulesQueueThread(new Runnable() {
-      @Override
-      public void run() {
-        ModelProgressEvent event = ModelProgressEvent.obtain(view.getId(), data);
-        reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
-      }
-    });
+    ModelProgressEvent event = ModelProgressEvent.obtain(view.getId(), data);
+    ReactContext reactContext = (ReactContext) view.getContext();
+    reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
   }
 
   // Face detection events
