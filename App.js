@@ -28,7 +28,7 @@ import {RNCamera} from './react-native-camera/src/index';
 
 const Camera = ({onHide}) => {
   let camera = useRef();
-  const [recording, setRecording] = useState(false);
+  const [isHotDog, setIsHotDog] = useState(false);
   return (
     <View style={styles.container}>
       <RNCamera
@@ -38,19 +38,13 @@ const Camera = ({onHide}) => {
         style={styles.preview}
         type={RNCamera.Constants.Type.back}
         flashMode={RNCamera.Constants.FlashMode.on}
-        // onRecordingProgress={data => {
-        //   console.log('dupa');
-        // }}
-        onModelProgress={(a, data) => {
-          console.log('onModelProgress called');
-          const _data = a.nativeEvent.dataList;
-          // console.log(a.nativeEvent);
-          console.log(_data.filter(i => i !== 0));
-          // console.log(typeof a);
-          // console.log('=====a======');
-          // if ('data' in a) {
-          //   console.log(a.data);
-          // }
+        onModelProgress={res => {
+          const _data = res.nativeEvent.dataList;
+          const foundHotDog = _data.some(
+            ({title, result}) => title === 'hot dog' && result >= 0.3,
+          );
+          // todo implement debounce or find way to avoid detection fast updates
+          setIsHotDog(foundHotDog);
         }}
         androidCameraPermissionOptions={{
           title: 'Permission to use camera',
@@ -64,31 +58,30 @@ const Camera = ({onHide}) => {
           buttonPositive: 'Ok',
           buttonNegative: 'Cancel',
         }}
-        onGoogleVisionBarcodesDetected={({barcodes}) => {
-          console.log(barcodes);
-        }}
       />
+      <View
+        style={{
+          width: '100%',
+          position: 'absolute',
+          bottom: 120,
+        }}>
+        <Text
+          style={{
+            color: isHotDog ? 'green' : 'red',
+            textAlign: 'center',
+            width: '100%',
+            fontSize: 20,
+          }}>
+          {isHotDog ? 'It is hot dog!' : 'Not hot dog!'}
+        </Text>
+      </View>
       <View style={{flex: 0, flexDirection: 'row', justifyContent: 'center'}}>
-        <TouchableOpacity
-          onPress={() => {
-            // console.log('Take picture');
-            if (!recording) {
-              camera.recordAsync();
-              setRecording(true);
-            } else {
-              camera.stopRecording();
-              setRecording(false);
-            }
-          }}
-          style={styles.capture}>
-          <Text style={{fontSize: 14}}> {recording ? 'Stop' : 'Start'} </Text>
-        </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
             onHide();
           }}
           style={styles.capture}>
-          <Text style={{fontSize: 14}}> END </Text>
+          <Text style={{fontSize: 14}}> Close camera </Text>
         </TouchableOpacity>
       </View>
     </View>
