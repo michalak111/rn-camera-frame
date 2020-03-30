@@ -31,11 +31,9 @@ import org.reactnative.camera.tflite.ImageUtils;
 import org.reactnative.camera.tflite.TFLiteObjectDetectionAPIModel;
 import org.reactnative.camera.utils.RNFileUtils;
 import org.reactnative.facedetector.RNFaceDetector;
-import org.tensorflow.lite.Interpreter;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -88,25 +86,13 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
     private int mCameraViewHeight = 0;
 
     // MODEL
-    private String mModelFile;
-    private Interpreter mModelProcessor;
-    private int mModelMaxFreqms;
-    private ByteBuffer mModelInput;
-    private int[] mModelViewBuf;
-    private int mModelImageDimX;
-    private int mModelImageDimY;
-    private int mModelOutputDim;
-    private ByteBuffer mModelOutput;
     private boolean mShouldRecognizeModel = false;
     public volatile boolean modelProcessorTaskLock = false;
-
-    // MODEL 2
     private Bitmap mRgbFrameBitmap = null;
     private Bitmap mCroppedBitmap = null;
     private Matrix frameToCropTransform;
     private Matrix cropToFrameTransform;
     private Classifier mModelDetector;
-
     private static final int TF_OD_API_INPUT_SIZE = 300;
     private static final boolean TF_OD_API_IS_QUANTIZED = true;
     private static final String TF_OD_API_MODEL_FILE = "detect.tflite";
@@ -235,81 +221,18 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
                 }
 
                 if (willCallModelTask) {
-                    Log.v("CALL MODEL", "CALL MODEL");
                     modelProcessorTaskLock = true;
-//          getImageData((TextureView) cameraView.getView());
-                    ModelProcessorAsyncTaskDelegate delegate = (ModelProcessorAsyncTaskDelegate) cameraView;
-//          new ModelProcessorAsyncTask(delegate, mModelProcessor, mModelInput, mModelOutput, mModelMaxFreqms, width, height, correctRotation).execute();
+
                     initModelProcessor(width, height, correctRotation);
-
-
                     processImage(data, width, height);
 
+                    ModelProcessorAsyncTaskDelegate delegate = (ModelProcessorAsyncTaskDelegate) cameraView;
                     new ModelProcessorAsyncTask(delegate, mModelDetector, mCroppedBitmap).execute();
                 }
 
             }
         });
     }
-
-//  private MappedByteBuffer loadModelFile() throws IOException {
-//    Log.v("LOADMODELFILE2", "====================LOADED=============");
-//    AssetFileDescriptor fileDescriptor = mThemedReactContext.getAssets().openFd(mModelFile);
-//    FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
-//    Log.v("LOADMODELFILE3", "====================LOADED=============");
-//    FileChannel fileChannel = inputStream.getChannel();
-//    long startOffset = fileDescriptor.getStartOffset();
-//    long declaredLength = fileDescriptor.getDeclaredLength();
-//    return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
-//  }
-
-//  private void setupModelProcessor() {
-//    try {
-//      Log.v("LOADMODELFILE1", "====================LOADED=============");
-//      mModelProcessor = new Interpreter(loadModelFile());
-//      Log.v("LOADMODELFILE4", "====================LOADED=============");
-//      Log.v("MODELPROCESSOR=====", mModelProcessor.toString());
-//      mModelInput = ByteBuffer.allocateDirect(mModelImageDimX * mModelImageDimY * 3);
-//      mModelViewBuf = new int[mModelImageDimX * mModelImageDimY];
-//      mModelOutput = ByteBuffer.allocateDirect(mModelOutputDim);
-//    } catch(Exception e) {
-//      Log.e("ERRRSETUP", e.toString());
-//    }
-//  }
-
-
-//  public void setModelFile(String modelFile, int inputDimX, int inputDimY, int outputDim, int freqms) {
-//    Log.v("MODELFILE", modelFile);
-//    this.mModelFile = modelFile;
-//    this.mModelImageDimX = inputDimX;
-//    this.mModelImageDimY = inputDimY;
-//    this.mModelOutputDim = outputDim;
-//    this.mModelMaxFreqms = freqms;
-//    boolean shouldProcessModel = (modelFile != null);
-//    if (shouldProcessModel && mModelProcessor == null) {
-//      setupModelProcessor();
-//    }
-//    this.mShouldRecognizeModel = shouldProcessModel;
-//    setScanning(mShouldDetectFaces || mShouldGoogleDetectBarcodes || mShouldScanBarCodes || mShouldRecognizeText || mShouldRecognizeModel);
-//  }
-
-//  private void getImageData(TextureView view) {
-//    Bitmap bitmap = view.getBitmap(mModelImageDimX, mModelImageDimY);
-//    if (bitmap == null) {
-//      return;
-//    }
-//    mModelInput.rewind();
-//    bitmap.getPixels(mModelViewBuf, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
-//    int pixel = 0;
-//    for (int i = 0; i < mModelImageDimX; ++i) {
-//      for (int j = 0; j < mModelImageDimY; ++j) {
-//        final int val = mModelViewBuf[pixel++];
-//        mModelInput.put((byte) ((val >> 16) & 0xFF));
-//        mModelInput.put((byte) ((val >> 8) & 0xFF));
-//        mModelInput.put((byte) (val & 0xFF));
-//      }
-//    }
-//  }
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
@@ -430,14 +353,8 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
         int cropSize = TF_OD_API_INPUT_SIZE;
         int previewWidth = width;
         int previewHeight = height;
-
         int sensorOrientation = orientation;
 
-//        sensorOrientation = rotation - getScreenOrientation(); // todo check
-
-//        if(!(mModelDetector == null || mRgbFrameBitmap == null || mCroppedBitmap == null || frameToCropTransform == null)) {
-//            return;
-//        }
 
         if(mModelDetector == null) {
             try {
@@ -448,6 +365,8 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
                                 TF_OD_API_LABELS_FILE,
                                 TF_OD_API_INPUT_SIZE,
                                 TF_OD_API_IS_QUANTIZED);
+                mModelDetector.setNumThreads(1);
+                mModelDetector.setUseNNAPI(true);
             } catch (final IOException e) {
                 e.printStackTrace();
             }
@@ -469,10 +388,7 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
     public void processImage (byte[] data, int previewWidth, int previewHeight) {
         int rgbBytes[] = new int[previewWidth * previewHeight];
         ImageUtils.convertYUV420SPToARGB8888(data, previewWidth, previewHeight, rgbBytes);
-
         mRgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
-
-//        rgbFrameBitmap.setPixels(getRgbBytes(), 0, previewWidth, 0, 0, previewWidth, previewHeight);
         final Canvas canvas = new Canvas(mCroppedBitmap);
         canvas.drawBitmap(mRgbFrameBitmap, frameToCropTransform, null);
     }
@@ -663,7 +579,6 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
     }
 
     public void setShouldRecognizeModel(boolean shouldRecognizeModel) {
-        // maybe set model here
         this.mShouldRecognizeModel = shouldRecognizeModel;
         setScanning(mShouldDetectFaces || mShouldGoogleDetectBarcodes || mShouldScanBarCodes || mShouldRecognizeText || mShouldRecognizeModel);
     }
@@ -738,8 +653,8 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
             mGoogleBarcodeDetector.release();
         }
 
-        if (mModelProcessor != null) {
-            mModelProcessor.close();
+        if (mModelDetector != null) {
+            mModelDetector.close();
         }
         mMultiFormatReader = null;
         mThemedReactContext.removeLifecycleEventListener(this);
