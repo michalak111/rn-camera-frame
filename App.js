@@ -28,7 +28,7 @@ import {RNCamera} from './react-native-camera/src/index';
 
 const Camera = ({onHide}) => {
   let camera = useRef();
-  const [isHotDog, setIsHotDog] = useState(false);
+  const [isMouse, setIsMouse] = useState(false);
   return (
     <View style={styles.container}>
       <RNCamera
@@ -40,11 +40,14 @@ const Camera = ({onHide}) => {
         flashMode={RNCamera.Constants.FlashMode.on}
         onModelProgress={res => {
           const _data = res.nativeEvent.dataList;
-          const foundHotDog = _data.some(
-            ({title, result}) => title === 'hot dog' && result >= 0.3,
+          const foundMouse = _data.some(
+            ({title, result}) => title === 'mouse' && result >= 0.5,
           );
-          // todo implement debounce or find way to avoid detection fast updates
-          setIsHotDog(foundHotDog);
+          setIsMouse(foundMouse);
+          console.log('=========================');
+          _data.map(({title, result}) => {
+            console.log(`${title} - ${result}`);
+          });
         }}
         androidCameraPermissionOptions={{
           title: 'Permission to use camera',
@@ -67,12 +70,12 @@ const Camera = ({onHide}) => {
         }}>
         <Text
           style={{
-            color: isHotDog ? 'green' : 'red',
+            color: isMouse ? 'green' : 'red',
             textAlign: 'center',
             width: '100%',
             fontSize: 20,
           }}>
-          {isHotDog ? 'It is hot dog!' : 'Not hot dog!'}
+          {isMouse ? 'It is mouse!' : 'Not mouse!'}
         </Text>
       </View>
       <View style={{flex: 0, flexDirection: 'row', justifyContent: 'center'}}>
@@ -91,7 +94,14 @@ const Camera = ({onHide}) => {
 const App: () => React$Node = () => {
   const [showCamera, setShowCamera] = React.useState(false);
   if (showCamera) {
-    return <Camera onHide={() => setShowCamera(false)} />;
+    return (
+      <Camera
+        onHide={() => {
+          setShowCamera(false);
+          console.log('CAMERA HIDE');
+        }}
+      />
+    );
   }
   return (
     <>
@@ -110,7 +120,10 @@ const App: () => React$Node = () => {
             <TouchableOpacity
               style={[styles.capture, {backgroundColor: 'blue'}]}
               accessibilityRole={'button'}
-              onPress={() => setShowCamera(true)}>
+              onPress={() => {
+                console.log('CAMERA SHOW');
+                setShowCamera(true);
+              }}>
               <Text style={{color: 'white'}}>Show Camera</Text>
             </TouchableOpacity>
             <View style={styles.sectionContainer}>
