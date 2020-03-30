@@ -602,8 +602,7 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
             return;
         }
 
-//        ByteBuffer dataDetected = data == null ? ByteBuffer.allocate(0) : data;
-//        RNCameraViewHelper.emitModelProgressEvent(this, dataDetected);
+        RNCameraViewHelper.emitModelProgressEvent(this, data);
     }
 
   @Override
