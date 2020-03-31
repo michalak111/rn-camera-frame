@@ -55,12 +55,6 @@ const Camera = ({onHide}) => {
           buttonPositive: 'Ok',
           buttonNegative: 'Cancel',
         }}
-        androidRecordAudioPermissionOptions={{
-          title: 'Permission to use audio recording',
-          message: 'We need your permission to use your audio',
-          buttonPositive: 'Ok',
-          buttonNegative: 'Cancel',
-        }}
       />
       <View
         style={{
