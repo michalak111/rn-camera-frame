@@ -28,7 +28,7 @@ import {RNCamera} from './react-native-camera/src/index';
 
 const Camera = ({onHide}) => {
   let camera = useRef();
-  const [recording, setRecording] = useState(false);
+  const [isMouse, setIsMouse] = useState(false);
   return (
     <View style={styles.container}>
       <RNCamera
@@ -36,10 +36,18 @@ const Camera = ({onHide}) => {
           camera = ref;
         }}
         style={styles.preview}
-        type={RNCamera.Constants.Type.front}
+        type={RNCamera.Constants.Type.back}
         flashMode={RNCamera.Constants.FlashMode.on}
-        onRecordingProgress={data => {
-          console.log('dupa');
+        onModelProgress={res => {
+          const _data = res.nativeEvent.dataList;
+          const foundMouse = _data.some(
+            ({title, result}) => title === 'mouse' && result >= 0.5,
+          );
+          setIsMouse(foundMouse);
+          console.log('=========================');
+          _data.map(({title, result}) => {
+            console.log(`${title} - ${result}`);
+          });
         }}
         androidCameraPermissionOptions={{
           title: 'Permission to use camera',
@@ -47,37 +55,30 @@ const Camera = ({onHide}) => {
           buttonPositive: 'Ok',
           buttonNegative: 'Cancel',
         }}
-        androidRecordAudioPermissionOptions={{
-          title: 'Permission to use audio recording',
-          message: 'We need your permission to use your audio',
-          buttonPositive: 'Ok',
-          buttonNegative: 'Cancel',
-        }}
-        onGoogleVisionBarcodesDetected={({barcodes}) => {
-          console.log(barcodes);
-        }}
       />
+      <View
+        style={{
+          width: '100%',
+          position: 'absolute',
+          bottom: 120,
+        }}>
+        <Text
+          style={{
+            color: isMouse ? 'green' : 'red',
+            textAlign: 'center',
+            width: '100%',
+            fontSize: 20,
+          }}>
+          {isMouse ? 'It is mouse!' : 'Not mouse!'}
+        </Text>
+      </View>
       <View style={{flex: 0, flexDirection: 'row', justifyContent: 'center'}}>
-        <TouchableOpacity
-          onPress={() => {
-            // console.log('Take picture');
-            if (!recording) {
-              camera.recordAsync();
-              setRecording(true);
-            } else {
-              camera.stopRecording();
-              setRecording(false);
-            }
-          }}
-          style={styles.capture}>
-          <Text style={{fontSize: 14}}> {recording ? 'Stop' : 'Start'} </Text>
-        </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
             onHide();
           }}
           style={styles.capture}>
-          <Text style={{fontSize: 14}}> END </Text>
+          <Text style={{fontSize: 14}}> Close camera </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -87,7 +88,14 @@ const Camera = ({onHide}) => {
 const App: () => React$Node = () => {
   const [showCamera, setShowCamera] = React.useState(false);
   if (showCamera) {
-    return <Camera onHide={() => setShowCamera(false)} />;
+    return (
+      <Camera
+        onHide={() => {
+          setShowCamera(false);
+          console.log('CAMERA HIDE');
+        }}
+      />
+    );
   }
   return (
     <>
@@ -106,7 +114,10 @@ const App: () => React$Node = () => {
             <TouchableOpacity
               style={[styles.capture, {backgroundColor: 'blue'}]}
               accessibilityRole={'button'}
-              onPress={() => setShowCamera(true)}>
+              onPress={() => {
+                console.log('CAMERA SHOW');
+                setShowCamera(true);
+              }}>
               <Text style={{color: 'white'}}>Show Camera</Text>
             </TouchableOpacity>
             <View style={styles.sectionContainer}>

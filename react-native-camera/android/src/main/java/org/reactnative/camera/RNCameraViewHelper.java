@@ -19,10 +19,13 @@ import com.google.android.cameraview.CameraView;
 import com.google.zxing.Result;
 import org.reactnative.camera.events.*;
 import org.reactnative.barcodedetector.RNBarcodeDetector;
+import org.reactnative.camera.tflite.Classifier;
 import org.reactnative.facedetector.RNFaceDetector;
 
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 
 public class RNCameraViewHelper {
 
@@ -233,6 +236,7 @@ public class RNCameraViewHelper {
      });
   }
 
+  // todo delete
   public static void emitRecordingProgressEvent(final ViewGroup view) {
 
     final ReactContext reactContext = (ReactContext) view.getContext();
@@ -255,6 +259,14 @@ public class RNCameraViewHelper {
         reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
       }
      });
+  }
+
+
+  public static void emitModelProgressEvent( ViewGroup view, List<Classifier.Recognition> data) {
+
+    ModelProgressEvent event = ModelProgressEvent.obtain(view.getId(), data);
+    ReactContext reactContext = (ReactContext) view.getContext();
+    reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher().dispatchEvent(event);
   }
 
   // Face detection events

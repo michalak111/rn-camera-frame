@@ -151,6 +151,12 @@ android {
             keyPassword 'android'
         }
     }
+
+     aaptOptions {
+          noCompress "tflite"
+          noCompress "lite"
+     }
+
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
