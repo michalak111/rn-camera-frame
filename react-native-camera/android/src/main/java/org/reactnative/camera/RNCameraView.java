@@ -4,15 +4,12 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.media.CamcorderProfile;
 import android.os.Build;
 
 import androidx.core.content.ContextCompat;
 
-import android.util.Log;
 import android.view.View;
 import android.os.AsyncTask;
 
@@ -28,7 +25,6 @@ import org.reactnative.barcodedetector.RNBarcodeDetector;
 import org.reactnative.camera.tasks.*;
 import org.reactnative.camera.tflite.Classifier;
 import org.reactnative.camera.tflite.ImageUtils;
-import org.reactnative.camera.tflite.TFLiteObjectDetectionAPIModel;
 import org.reactnative.camera.utils.RNFileUtils;
 import org.reactnative.facedetector.RNFaceDetector;
 
@@ -89,14 +85,7 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
     private boolean mShouldRecognizeModel = false;
     public volatile boolean modelProcessorTaskLock = false;
     private Bitmap mRgbFrameBitmap = null;
-    private Bitmap mCroppedBitmap = null;
-    private Matrix frameToCropTransform;
-    private Matrix cropToFrameTransform;
     private Classifier mModelDetector;
-    private static final int TF_OD_API_INPUT_SIZE = 300;
-    private static final boolean TF_OD_API_IS_QUANTIZED = true;
-    private static final String TF_OD_API_MODEL_FILE = "detect.tflite";
-    private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/labelmap.txt";
 
     public RNCameraView(ThemedReactContext themedReactContext) {
         super(themedReactContext, true);
@@ -223,11 +212,11 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
                 if (willCallModelTask) {
                     modelProcessorTaskLock = true;
 
-                    initModelProcessor(width, height, correctRotation);
+                    initModelProcessor(width, height);
                     processImage(data, width, height);
 
                     ModelProcessorAsyncTaskDelegate delegate = (ModelProcessorAsyncTaskDelegate) cameraView;
-                    new ModelProcessorAsyncTask(delegate, mModelDetector, mCroppedBitmap).execute();
+                    new ModelProcessorAsyncTask(delegate, mModelDetector, mRgbFrameBitmap, correctRotation).execute();
                 }
 
             }
@@ -349,48 +338,22 @@ public class RNCameraView extends CameraView implements LifecycleEventListener, 
     }
 
 
-    private void initModelProcessor (int width, int height, int orientation) {
-        int cropSize = TF_OD_API_INPUT_SIZE;
+    private void initModelProcessor (int width, int height) {
         int previewWidth = width;
         int previewHeight = height;
-        int sensorOrientation = orientation;
-
 
         if(mModelDetector == null) {
-            try {
-                mModelDetector =
-                        TFLiteObjectDetectionAPIModel.create(
-                                mThemedReactContext.getAssets(),
-                                TF_OD_API_MODEL_FILE,
-                                TF_OD_API_LABELS_FILE,
-                                TF_OD_API_INPUT_SIZE,
-                                TF_OD_API_IS_QUANTIZED);
-                mModelDetector.setNumThreads(1);
-                mModelDetector.setUseNNAPI(true);
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
+            mModelDetector = Classifier.create(mThemedReactContext);
         }
 
-
         mRgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
-        mCroppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Bitmap.Config.ARGB_8888);
-
-        frameToCropTransform = ImageUtils.getTransformationMatrix(
-                previewWidth, previewHeight,
-                cropSize, cropSize,
-                sensorOrientation, false);
-
-        cropToFrameTransform = new Matrix();
-        frameToCropTransform.invert(cropToFrameTransform);
     }
 
     public void processImage (byte[] data, int previewWidth, int previewHeight) {
         int rgbBytes[] = new int[previewWidth * previewHeight];
         ImageUtils.convertYUV420SPToARGB8888(data, previewWidth, previewHeight, rgbBytes);
+
         mRgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
-        final Canvas canvas = new Canvas(mCroppedBitmap);
-        canvas.drawBitmap(mRgbFrameBitmap, frameToCropTransform, null);
     }
 
     /**
