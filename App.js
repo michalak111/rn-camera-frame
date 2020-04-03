@@ -6,7 +6,7 @@
  * @flow
  */
 
-import React, {useRef, useState} from 'react';
+import React, {useRef, useState, useEffect} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -25,6 +25,7 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 import {RNCamera} from './react-native-camera/src/index';
+import RNMycameralib from './mycameralib/index';
 
 const Camera = ({onHide}) => {
   let camera = useRef();
@@ -87,6 +88,10 @@ const Camera = ({onHide}) => {
 
 const App: () => React$Node = () => {
   const [showCamera, setShowCamera] = React.useState(false);
+  useEffect(() => {
+    RNMycameralib.showToast('Awesome Toast', RNMycameralib.LONG);
+  }, []);
+
   if (showCamera) {
     return (
       <Camera
