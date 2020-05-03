@@ -2,6 +2,8 @@ package org.reactnative.camera.tasks;
 
 import org.reactnative.camera.tflite.Classifier;
 import android.graphics.Bitmap;
+import android.util.Log;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -10,16 +12,19 @@ public class ModelProcessorAsyncTask extends android.os.AsyncTask<Void, Void, Li
   private ModelProcessorAsyncTaskDelegate mDelegate;
 
   private Classifier mDetector;
-  private Bitmap mCroppedBitmap;
+  private Bitmap mRgbFrameBitmap;
+  private Integer mSensorOrientation;
 
   public ModelProcessorAsyncTask(
       ModelProcessorAsyncTaskDelegate delegate,
       Classifier detector,
-      Bitmap croppedBitmap
+      Bitmap rgbFrameBitmap,
+      Integer sensorOrientation
   ) {
     mDelegate = delegate;
     mDetector = detector;
-    mCroppedBitmap = croppedBitmap;
+    mRgbFrameBitmap = rgbFrameBitmap;
+    mSensorOrientation = sensorOrientation;
   }
 
 
@@ -30,7 +35,7 @@ public class ModelProcessorAsyncTask extends android.os.AsyncTask<Void, Void, Li
       return null;
     }
 
-    final List<Classifier.Recognition> results = mDetector.recognizeImage(mCroppedBitmap);
+    final List<Classifier.Recognition> results = mDetector.recognizeImage(mRgbFrameBitmap, mSensorOrientation);
     final List<Classifier.Recognition> mappedRecognitions =
             new LinkedList<Classifier.Recognition>();
 
